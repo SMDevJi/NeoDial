@@ -3,15 +3,78 @@ import {
     Text,
     Pressable,
     Image,
-    ScrollView
+    ScrollView,
+    ToastAndroid,
+    Alert,
+    ActivityIndicator
 } from 'react-native'
-import React from 'react'
-import { useRouter } from 'expo-router'
+import React, { useEffect, useState } from 'react'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { images } from '@/constants/images'
+import { deleteCallLog, readCallLogs, requestAllPermissions } from '@/lib/CallLogUtil'
+import formatDuration from '@/lib/utils'
 
 const LogDetails = () => {
+    const [logData, setLogData] = useState(null)
+    const params = useLocalSearchParams();
+
+    const log = JSON.parse(params.log as string);
+    const logId = params.id;
+
+    console.log(log, logId)
 
     const router = useRouter()
+
+
+
+
+
+
+    const deleteLog = async () => {
+        try {
+            Alert.alert(
+                'Delete log?',
+                'Are you sure you want to delete this log?',
+                [
+                    {
+                        text: 'Cancel',
+                        style: 'cancel',
+                    },
+                    {
+                        text: 'Yes',
+                        onPress: async () => {
+                            console.log('Confirmed')
+                            await deleteCallLog(logId)
+                            ToastAndroid.show('Call log deleted successfully!', ToastAndroid.SHORT);
+                            router.push('/')
+                        },
+                    },
+                ],
+                { cancelable: true },
+            );
+
+
+        } catch (error) {
+            ToastAndroid.show('Failed to delete call log!', ToastAndroid.SHORT);
+        }
+
+    }
+
+
+
+    useEffect(() => {
+        setLogData(log)
+    }, []);
+
+
+    if (!logData) {
+        return <View className='flex-col justify-center items-center h-full '>
+            <Text className="text-xl font-bold text-text-secondary ">
+                Loading..
+            </Text>
+            <ActivityIndicator size="large" color="#66BB6A" className="" />
+        </View>
+    }
 
     return (
         <View className="flex-1 bg-white">
@@ -40,23 +103,24 @@ const LogDetails = () => {
             >
 
 
-                <View className="bg-background-card rounded-xl p-6 shadow-card  items-center">
+                <View className="bg-background-card rounded-xl p-6 shadow-card gap-2 items-center">
 
                     <View className='justify-center'>
                         <View className="bg-green-200 items-center justify-center self-start rounded-full size-24">
-                            <Text className="text-text-primary text-4xl font-bold">
-                                A
-                            </Text>
+                            {logData && <Text className="text-text-primary text-4xl font-bold">
+                                {logData?.name && logData?.name[0]?.toUpperCase()}
+                                {!logData?.name && logData?.phoneNumber[0]}
+                            </Text>}
                         </View>
                     </View>
 
 
-                    <Text className="text-3xl font-bold text-text-primary">
-                        John Doe
-                    </Text>
+                    {logData?.name && <Text className="text-3xl font-bold text-text-primary">
+                        {logData?.name}
+                    </Text>}
 
                     <Text className="text-text-secondary mt-1 text-lg">
-                        +91 9876543210
+                        {logData?.phoneNumber}
                     </Text>
 
                 </View>
@@ -71,7 +135,7 @@ const LogDetails = () => {
                         </Text>
 
                         <Text className="text-text-primary font-semibold">
-                            Incoming
+                            {logData?.type}
                         </Text>
                     </View>
 
@@ -82,7 +146,11 @@ const LogDetails = () => {
                         </Text>
 
                         <Text className="text-text-primary font-semibold">
-                            12 May 2026
+                            {new Date(Number(logData?.timestamp)).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                            })}
                         </Text>
                     </View>
 
@@ -93,23 +161,29 @@ const LogDetails = () => {
                         </Text>
 
                         <Text className="text-text-primary font-semibold">
-                            10:32 AM
+                            {new Date(Number(logData?.timestamp)).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true
+                            })}
                         </Text>
                     </View>
 
 
-                    <View className="flex-row justify-between items-center mb-5">
-                        <Text className="text-text-secondary">
-                            Duration
-                        </Text>
+                    {logData?.duration != 0 &&
+                        <View className="flex-row justify-between items-center mb-5">
+                            <Text className="text-text-secondary">
+                                Duration
+                            </Text>
 
-                        <Text className="text-text-primary font-semibold">
-                            02:45
-                        </Text>
-                    </View>
+                            <Text className="text-text-primary font-semibold">
+                                {formatDuration(logData?.duration)}
+                            </Text>
+                        </View>
+                    }
 
 
-                    <View className="flex-row justify-between items-center">
+                    {/* <View className="flex-row justify-between items-center">
                         <Text className="text-text-secondary">
                             SIM
                         </Text>
@@ -117,7 +191,7 @@ const LogDetails = () => {
                         <Text className="text-text-primary font-semibold">
                             SIM 1
                         </Text>
-                    </View>
+                    </View> */}
 
                 </View>
 
@@ -128,28 +202,38 @@ const LogDetails = () => {
 
 
                     <Pressable
-                        onPress={() => router.push('/edit/abc')}
-                        className="flex-row gap-2 bg-background-soft border-border border rounded-xl py-4 items-center justify-center"
+                        onPress={() =>
+                            router.push({
+                                pathname: "/edit/[id]",
+                                params: {
+                                    id: String(log.id),
+                                    log: JSON.stringify(log),
+                                },
+                            })
+                        }
+                    className="flex-row gap-2 bg-background-soft border-border border rounded-xl py-4 items-center justify-center"
                     >
-                        <Image source={images.edit} className='size-5' tintColor="#2e7d32" />
-                        <Text className="text-primary-dark font-bold text-base">
-                            Edit Call Log
-                        </Text>
-                    </Pressable>
+                    <Image source={images.edit} className='size-5' tintColor="#2e7d32" />
+                    <Text className="text-primary-dark font-bold text-base">
+                        Edit Call Log
+                    </Text>
+                </Pressable>
 
 
-                    <Pressable className="flex-row gap-2 bg-red-50 border border-red-200 rounded-xl py-4 items-center justify-center">
-                        <Image source={images.remove} className='size-6' tintColor="#ef5350" />
-                        <Text className="text-missed font-bold text-base">
-                            Delete Log
-                        </Text>
-                    </Pressable>
-
-                </View>
-
-            </ScrollView>
+                <Pressable
+                    onPress={() => deleteLog()}
+                    className="flex-row gap-2 bg-red-50 border border-red-200 rounded-xl py-4 items-center justify-center">
+                    <Image source={images.remove} className='size-6' tintColor="#ef5350" />
+                    <Text className="text-missed font-bold text-base">
+                        Delete Log
+                    </Text>
+                </Pressable>
 
         </View>
+
+            </ScrollView >
+
+        </View >
     )
 }
 

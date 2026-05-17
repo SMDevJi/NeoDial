@@ -1,23 +1,47 @@
-import { Image, Pressable, ScrollView, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, ToastAndroid, TouchableWithoutFeedback, View } from 'react-native';
 import React, { useState } from 'react';
 import { images } from '@/constants/images';
 import { useRouter } from 'expo-router';
 import BackUpCard from '@/components/BackUpCard';
-import { readCallLogs } from '../lib/CallLogUtil'
-const backups = [
-  { id: 1, name: 'call_logs_backup_1747758431.db', date: 'May 20, 2025 10:45 AM', size: '2.4 MB' },
-  { id: 2, name: 'call_logs_backup_1747758432.db', date: 'May 21, 2025 11:00 AM', size: '3.1 MB' },
-  { id: 3, name: 'call_logs_backup_1747758433.db', date: 'May 22, 2025 09:15 AM', size: '1.8 MB' },
-];
+import { backupCallLogs, readCallLogs, restoreCallLogsFromFile } from '../lib/CallLogUtil'
+
 
 const BackupRestore = () => {
   const router = useRouter();
   const [openDropdownId, setOpenDropdownId] = useState(null);
-
+  const [backupLoading, setBackupLoading] = useState(false)
+  const [restoreLoading, setRestoreLoading] = useState(false)
+  const [done, setDone] = useState(0)
+  const [total, setTotal] = useState(0)
 
   const handleCreateBackup = async () => {
-    const allLogs = await readCallLogs()
-    console.log(allLogs)
+    if(restoreLoading || backupLoading) return
+    try {
+      setBackupLoading(true)
+      const allLogs = await readCallLogs()
+      console.log(JSON.stringify(allLogs, null, 2))
+      const savedLoc = await backupCallLogs()
+      ToastAndroid.show(`Backup saved to ${savedLoc}!`, ToastAndroid.SHORT);
+    } catch (error) {
+      ToastAndroid.show('Failed to save backup!', ToastAndroid.SHORT);
+    } finally {
+      setBackupLoading(false)
+    }
+
+  }
+
+
+  const handleRestoreBackup = async () => {
+    if(restoreLoading || backupLoading) return
+    try {
+      setRestoreLoading(true)
+      await restoreCallLogsFromFile(setDone,setTotal)
+      ToastAndroid.show('Backup restored successfully!', ToastAndroid.SHORT);
+    } catch (error) {
+      ToastAndroid.show('Failed to restore backup!', ToastAndroid.SHORT);
+    }finally{
+      setRestoreLoading(false)
+    }
   }
 
   return (
@@ -37,8 +61,8 @@ const BackupRestore = () => {
           <Text className='text-text-secondary font-semibold text-sm mt-1'>Create a backup of your call logs.</Text>
         </View>
         <Pressable
-        onPress={handleCreateBackup}
-        className='flex-row items-center gap-2 bg-background-soft px-4 py-3 rounded-xl'>
+          onPress={handleCreateBackup}
+          className='flex-row items-center gap-2 bg-background-soft px-4 py-3 rounded-xl'>
           <Image source={images.cloud} className="size-6" tintColor='#2e7d32' />
           <Text className='text-primary-dark font-semibold'>Create Backup</Text>
         </Pressable>
@@ -50,15 +74,17 @@ const BackupRestore = () => {
           <Text className='font-bold text-base'>Restore</Text>
           <Text className='text-text-secondary font-semibold text-sm mt-1'>Restore call logs from a backup file.</Text>
         </View>
-        <Pressable className='flex-row items-center gap-2 bg-background-soft px-4 py-3 rounded-xl'>
+        <Pressable
+          onPress={handleRestoreBackup}
+          className='flex-row items-center gap-2 bg-background-soft px-4 py-3 rounded-xl'>
           <Image source={images.file} className="size-6" tintColor='#2e7d32' />
           <Text className='text-primary-dark font-semibold'>Restore Backup</Text>
         </Pressable>
       </View>
 
 
-      <View className='p-3 flex-1'>
-        <Text className='text-lg font-bold'>Backup History</Text>
+      <View className='p-3 flex-1 items-center'>
+        {/* <Text className='text-lg font-bold'>Backup History</Text>
 
         <ScrollView>
           {backups.map((backup) => (
@@ -72,7 +98,32 @@ const BackupRestore = () => {
               onCloseDropdown={() => setOpenDropdownId(null)}
             />
           ))}
-        </ScrollView>
+        </ScrollView> */}
+
+        {backupLoading &&
+          <>
+            <Text className='mt-20 font-semibold text-text-secondary'>Creating backup file....</Text>
+            <ActivityIndicator
+              size="large"
+              color="#2E7D32"
+              className='mt-2'
+            />
+          </>
+
+        }
+
+        {restoreLoading &&
+          <>
+            <Text className='mt-20 font-semibold text-text-secondary'>Restoring backup file.... ({done}/{total})</Text>
+            <ActivityIndicator
+              size="large"
+              color="#2E7D32"
+              className='mt-2'
+            />
+          </>
+
+        }
+
       </View>
 
 

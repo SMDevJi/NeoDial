@@ -12,6 +12,7 @@ import cloud from "@/assets/images/cloud.png";
 import file from "@/assets/images/file.png";
 import file2 from "@/assets/images/file2.png";
 import options from "@/assets/images/options.png";
+import rejected from "@/assets/images/rejected.png";
 
 
 export const images = {
@@ -28,5 +29,6 @@ export const images = {
     cloud,
     file,
     file2,
-    options
+    options,
+    rejected
 };

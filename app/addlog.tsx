@@ -4,6 +4,7 @@ import {
     ScrollView,
     Text,
     TextInput,
+    ToastAndroid,
     View,
 } from 'react-native'
 import React, { useState } from 'react'
@@ -11,7 +12,12 @@ import { images } from '@/constants/images'
 import { useRouter } from 'expo-router'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import CallRecordCard from '@/components/CallRecordCard'
-import { addCallLog, editCallLogFull,deleteCallLog } from '../lib/CallLogUtil';
+import { addCallLog, editCallLogFull, deleteCallLog } from '../lib/CallLogUtil';
+import formatDuration from '../lib/utils'
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
+
 
 const addlog = () => {
 
@@ -29,7 +35,6 @@ const addlog = () => {
     const [showTimePicker, setShowTimePicker] = useState(false)
 
     const [duration, setDuration] = useState('')
-    const [selectedSim, setSelectedSim] = useState('SIM 1')
 
 
     const formattedDate = selectedDate.toLocaleDateString('en-GB', {
@@ -45,38 +50,36 @@ const addlog = () => {
     })
 
 
-    const formatDuration = (seconds: string) => {
-
-        const totalSeconds = Number(seconds)
-
-        if (!totalSeconds) return '0 sec'
-
-        const hrs = Math.floor(totalSeconds / 3600)
-        const mins = Math.floor((totalSeconds % 3600) / 60)
-        const secs = totalSeconds % 60
-
-        if (hrs > 0) {
-            return `${hrs} hr ${mins} min`
-        }
-
-        if (mins > 0) {
-            return `${mins} min ${secs} sec`
-        }
-
-        return `${secs} sec`
-    }
+    
 
     const handleSave = async () => {
-        const newCallId = await addCallLog({
-            number: '1234567890',
-            type: 'REJECTED',
-            duration: '60',          // seconds
-            timestamp: Date.now(),
-            name: 'hihi',
-            simId: 'SIM 1'
-        });
+        if (!phoneNumber) {
+            ToastAndroid.show('Phone number not provided!', ToastAndroid.SHORT);
+            return
+        }
+        if (callType == 'Incoming' || callType == 'Outgoing') {
+            if (!duration) {
+                ToastAndroid.show('Duration not provided!', ToastAndroid.SHORT);
+                return
+            }
+        }
+        try {
+            const newCallId = await addCallLog({
+                number: phoneNumber.toString(),
+                type: callType.toUpperCase(),
+                duration: duration.toString(),
+                timestamp: Number(selectedDate),
+                name: contactName,
+                simId: ''
+            });
 
-         console.log('Added call log with ID:', newCallId);
+            console.log('Added call log with ID:', newCallId);
+            ToastAndroid.show('Call log added successfully!', ToastAndroid.SHORT);
+            router.push('/')
+        } catch (error) {
+            ToastAndroid.show('Failed to add call log!', ToastAndroid.SHORT);
+        }
+
 
 
         // const rowsUpdated = await editCallLogFull({
@@ -94,12 +97,19 @@ const addlog = () => {
 
 
 
-    //      const result = await deleteCallLog('2');
-    // console.log('Rows deleted:', result);
+        //      const result = await deleteCallLog('2');
+        // console.log('Rows deleted:', result);
 
-        router.push('/')
+
     }
 
+    const log = {
+        dateTime: dayjs(selectedDate).format("DD-MMM-YYYY hh:mm:ss A"),
+        name: contactName,
+        type: callType.toUpperCase(),
+        phoneNumber,
+        duration
+    }
     return (
 
         <View className="flex-1 bg-white">
@@ -141,7 +151,7 @@ const addlog = () => {
                 <View className="mb-5">
 
                     <Text className="text-text-primary font-bold mb-2 ">
-                        Contact Name
+                        Contact Name (optional)
                     </Text>
 
                     <TextInput
@@ -179,9 +189,9 @@ const addlog = () => {
                         Call Type
                     </Text>
 
-                    <View className="flex-row gap-2">
+                    <View className="flex-row gap-1">
 
-                        {['Incoming', 'Outgoing', 'Missed'].map((type) => {
+                        {['Incoming', 'Outgoing', 'Missed', 'Rejected'].map((type) => {
 
                             const isSelected = callType === type
 
@@ -190,7 +200,9 @@ const addlog = () => {
                                     ? images.incoming
                                     : type === 'Outgoing'
                                         ? images.outgoing
-                                        : images.missed;
+                                        : type === 'Rejected'
+                                            ? images.rejected :
+                                            images.missed;
 
                             const iconColor =
                                 type === 'Incoming'
@@ -203,14 +215,14 @@ const addlog = () => {
                                 <Pressable
                                     key={type}
                                     onPress={() => setCallType(type)}
-                                    className={`flex-1 flex-row gap-2 rounded-xl py-4 px-2 items-center border ${isSelected
+                                    className={`flex-1 flex-row gap-1 rounded-xl py-4 px-2 items-center border ${isSelected
                                         ? 'bg-background-soft border-primary'
                                         : 'bg-white border-border'
                                         }`}
                                 >
-                                    <Image source={iconSource} className="size-6" tintColor={iconColor} />
+                                    <Image source={iconSource} className="size-5" tintColor={iconColor} />
                                     <Text
-                                        className={`font-semibold ${isSelected
+                                        className={`font-semibold text-sm ${isSelected
                                             ? 'text-primary-dark'
                                             : 'text-text-secondary'
                                             }`}
@@ -274,7 +286,7 @@ const addlog = () => {
                 </View>
 
 
-                <View className="mb-5">
+                {!(callType == 'Missed' || callType == 'Rejected') && <View className="mb-5">
 
                     <Text className="text-text-primary mb-2 font-bold">
                         Duration (seconds)
@@ -301,45 +313,10 @@ const addlog = () => {
 
                     </View>
 
-                </View>
+                </View>}
 
 
-                <View className="mb-5">
 
-                    <Text className="text-text-primary mb-3 font-bold">
-                        SIM
-                    </Text>
-
-                    <View className="flex-row gap-2">
-
-                        {['SIM 1', 'SIM 2'].map((sim) => {
-
-                            const isSelected = selectedSim === sim
-
-                            return (
-                                <Pressable
-                                    key={sim}
-                                    onPress={() => setSelectedSim(sim)}
-                                    className={`flex-1 rounded-xl py-4 items-center border ${isSelected
-                                        ? 'bg-background-soft border-primary'
-                                        : 'bg-white border-border'
-                                        }`}
-                                >
-                                    <Text
-                                        className={`font-semibold ${isSelected
-                                            ? 'text-primary-dark'
-                                            : 'text-text-secondary'
-                                            }`}
-                                    >
-                                        {sim}
-                                    </Text>
-                                </Pressable>
-                            )
-                        })}
-
-                    </View>
-
-                </View>
 
 
                 <View className="bg-background-soft border border-primary rounded-xl p-5">
@@ -348,7 +325,7 @@ const addlog = () => {
                         Preview
                     </Text>
 
-                    <CallRecordCard isPreview={true} />
+                    <CallRecordCard isPreview={true} log={log} />
 
                     {/* <View className="flex-row justify-between items-center">
 

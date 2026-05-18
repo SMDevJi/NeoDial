@@ -21,7 +21,11 @@ const BackupRestore = () => {
       const allLogs = await readCallLogs()
       console.log(JSON.stringify(allLogs, null, 2))
       const savedLoc = await backupCallLogs()
-      ToastAndroid.show(`Backup saved to ${savedLoc}!`, ToastAndroid.SHORT);
+      if(!savedLoc){
+        ToastAndroid.show(`Operation cancelled!`, ToastAndroid.SHORT);
+      }else{
+        ToastAndroid.show(`Backup saved to ${savedLoc}!`, ToastAndroid.SHORT);
+      }
     } catch (error) {
       ToastAndroid.show('Failed to save backup!', ToastAndroid.SHORT);
     } finally {
@@ -35,8 +39,16 @@ const BackupRestore = () => {
     if(restoreLoading || backupLoading) return
     try {
       setRestoreLoading(true)
-      await restoreCallLogsFromFile(setDone,setTotal)
-      ToastAndroid.show('Backup restored successfully!', ToastAndroid.SHORT);
+      setDone(0)
+      setTotal(0)
+      const backedupFlag=await restoreCallLogsFromFile(setDone,setTotal)
+      
+      if(!backedupFlag){
+        ToastAndroid.show(`Operation cancelled!`, ToastAndroid.SHORT);
+      }else{
+        ToastAndroid.show('Backup restored successfully!', ToastAndroid.SHORT);
+      }
+      
     } catch (error) {
       ToastAndroid.show('Failed to restore backup!', ToastAndroid.SHORT);
     }finally{

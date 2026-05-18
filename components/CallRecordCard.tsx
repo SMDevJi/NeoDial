@@ -3,9 +3,9 @@ import React from 'react'
 import { images } from '@/constants/images'
 import { useRouter } from 'expo-router'
 import formatDuration from '../lib/utils'
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-dayjs.extend(customParseFormat);
+// import dayjs from "dayjs";
+// import customParseFormat from "dayjs/plugin/customParseFormat";
+// dayjs.extend(customParseFormat);
 
 interface Props {
     isPreview?: boolean
@@ -14,6 +14,7 @@ interface Props {
 
 const CallRecordCard = ({ isPreview, log }: Props) => {
     const router = useRouter()
+
 
 
 
@@ -39,10 +40,10 @@ const CallRecordCard = ({ isPreview, log }: Props) => {
 
 
 
-    const date = dayjs(
-        log.dateTime,
-        "DD-MMM-YYYY hh:mm:ss a"
-    );
+    // const date = dayjs(
+    //     log.dateTime,
+    //     "DD-MMM-YYYY hh:mm:ss a"
+    // );
 
 
 
@@ -93,7 +94,12 @@ const CallRecordCard = ({ isPreview, log }: Props) => {
                         </View>
 
                         <View>
-                            <Text>{date.format("hh:mm A")}</Text>
+                            <Text>{new Date(Number(log.timestamp)).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true,
+                            })}</Text>
+
                             {(log?.duration != null && log?.duration != 0) && (
                                 <Text>{String(formatDuration(log.duration))}</Text>
                             )}

@@ -1,50 +1,261 @@
-# Welcome to your Expo app 👋
+# NeoDial
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern Android call log editor built with:
 
-## Get started
+- Expo
+- React Native
+- Expo Router
+- Tailwind CSS via NativeWind
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+# ✨ Features
 
-2. Start the app
+- Add call logs
+- Edit existing logs
+- Delete call logs
+- Backup call logs
+- Restore call logs
+- Modern green-themed UI
+- Native Android call log access
+- Contact auto creation support
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+# 💾 Backup & Restore
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+NeoDial supports:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Creating local backups of call logs
+- Restoring previously saved backups
+- Import/export backup files
 
-## Get a fresh project
+This allows users to safely preserve and restore their call history anytime.
 
-When you're ready, run:
+---
+
+# ⚠️ Important
+
+This app uses native Android modules.
+
+You MUST run:
 
 ```bash
-npm run reset-project
+npx expo prebuild
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+before running the app.
 
-## Learn more
+Otherwise the native Java/Kotlin files will not exist.
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+# 📦 Installation
 
-## Join the community
+## 1. Install dependencies
 
-Join our community of developers creating universal apps.
+```bash
+npm install
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 2. Generate native folders
+
+```bash
+npx expo prebuild
+```
+
+This creates:
+
+```txt
+android/
+```
+
+---
+
+## 3. Add Native Android Files from prebuild-files folder
+
+After prebuild, add these files:
+
+---
+
+## 📄 Add File
+
+### `android/app/src/main/java/com/anonymous/NeoDial/CallLogModule.java`
+
+Contains:
+- add call log
+- update call log
+- delete call log
+- contact creation
+
+---
+
+### `android/app/src/main/java/com/anonymous/NeoDial/CallLogPackage.java`
+
+Registers the native module package.
+
+---
+
+# ✏️ Modify Existing Files
+
+---
+
+## 📄 Modify
+
+### `android/app/src/main/AndroidManifest.xml`
+
+Add permissions:
+
+```xml
+<uses-permission android:name="android.permission.READ_CALL_LOG"/>
+<uses-permission android:name="android.permission.WRITE_CALL_LOG"/>
+<uses-permission android:name="android.permission.READ_CONTACTS"/>
+<uses-permission android:name="android.permission.WRITE_CONTACTS"/>
+```
+
+Also add custom scheme:
+
+```xml
+<data android:scheme="neodial"/>
+```
+
+---
+
+## 📄 Modify
+
+### `android/app/src/main/java/com/anonymous/NeoDial/MainApplication.kt`
+
+Add:
+
+```kotlin
+import com.anonymous.NeoDial.CallLogPackage
+```
+
+Then register package:
+
+```kotlin
+override fun getPackages(): List<ReactPackage> =
+    PackageList(this).packages.apply {
+        add(CallLogPackage())
+    }
+```
+
+---
+
+## 📄 MainActivity.kt
+
+No major changes needed besides keeping Expo prebuild defaults intact.
+
+---
+
+# ▶️ Run App
+
+## Android
+
+```bash
+npx expo run:android
+```
+
+---
+
+# 🔐 Permissions
+
+The app requires:
+
+| Permission | Reason |
+|---|---|
+| READ_CALL_LOG | Read call history |
+| WRITE_CALL_LOG | Modify call logs |
+| READ_CONTACTS | Read contacts |
+| WRITE_CONTACTS | Create contacts |
+
+---
+
+# 🧠 If Native Code Changes Later
+
+Whenever you:
+
+- add new Java/Kotlin files
+- change package names
+- modify AndroidManifest
+- add native modules
+
+Do this:
+
+---
+
+## Step 1
+
+```bash
+npx expo prebuild --clean
+```
+
+---
+
+## Step 2
+
+Re-add your custom native files because `--clean` can overwrite them.
+
+Files to restore:
+
+```txt
+CallLogModule.java
+CallLogPackage.java
+```
+
+---
+
+## Step 3
+
+Re-apply modifications to:
+
+```txt
+AndroidManifest.xml
+MainApplication.kt
+```
+
+---
+
+# 📱 Recommended Development Flow
+
+```bash
+npm install
+
+npx expo prebuild
+
+npx expo run:android
+```
+
+To create release build:
+
+```bash
+npx expo run:android --variant release
+```
+
+---
+
+# 🛠 Tech Stack
+
+| Tech | Usage |
+|---|---|
+| React Native | Mobile app |
+| Expo | App tooling |
+| Expo Router | Routing |
+| NativeWind | Tailwind styling |
+| Java/Kotlin | Android native modules |
+
+---
+
+# ⚠️ Android Only
+
+This project currently supports:
+
+✅ Android
+
+Not supported:
+- iOS
+- Web
+
+because iOS restricts direct call log access.

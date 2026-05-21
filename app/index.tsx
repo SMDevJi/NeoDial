@@ -4,6 +4,7 @@ import {
   Pressable,
   SectionList,
   Text,
+  ToastAndroid,
   View,
 } from "react-native";
 
@@ -130,6 +131,7 @@ export default function Index() {
 
       const logs = await readCallLogs();
       setAllLogs(logs);
+      ToastAndroid.show(`${logs.length} contacts loaded!`, ToastAndroid.SHORT);
 
       const firstBatch = logs.slice(0, 200);
       const grouped = groupCallLogs(firstBatch);

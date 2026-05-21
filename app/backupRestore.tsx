@@ -22,7 +22,7 @@ const BackupRestore = () => {
       console.log(JSON.stringify(allLogs, null, 2))
       const savedLoc = await backupCallLogs()
       if(!savedLoc){
-        ToastAndroid.show(`Operation cancelled!`, ToastAndroid.SHORT);
+        ToastAndroid.show('Operation cancelled!', ToastAndroid.SHORT);
       }else{
         ToastAndroid.show(`Backup saved to ${savedLoc}!`, ToastAndroid.SHORT);
       }

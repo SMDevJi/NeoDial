@@ -1,4 +1,8 @@
 # NeoDial
+# 📥 Download APK
+
+If you just want to try the app, download the APK from [Releases](https://github.com/smdevji/NeoDial/releases).
+
 
 A modern Android call log editor built with:
 

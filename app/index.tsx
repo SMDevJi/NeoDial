@@ -8,11 +8,11 @@ import {
   View,
 } from "react-native";
 
-import { useCallback, useState } from "react";
-import { Link, useFocusEffect } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { images } from "@/constants/images";
 import CallRecordCard from "@/components/CallRecordCard";
+import { images } from "@/constants/images";
+import { Link, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   readCallLogs,
@@ -131,7 +131,7 @@ export default function Index() {
 
       const logs = await readCallLogs();
       setAllLogs(logs);
-      ToastAndroid.show(`${logs.length} contacts loaded!`, ToastAndroid.SHORT);
+      ToastAndroid.show(`${logs.length} call logs loaded!`, ToastAndroid.SHORT);
 
       const firstBatch = logs.slice(0, 200);
       const grouped = groupCallLogs(firstBatch);

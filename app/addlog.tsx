@@ -34,7 +34,7 @@ const addlog = () => {
     const [showDatePicker, setShowDatePicker] = useState(false)
     const [showTimePicker, setShowTimePicker] = useState(false)
 
-    const [duration, setDuration] = useState('')
+    const [duration, setDuration] = useState('0')
 
 
     const formattedDate = selectedDate.toLocaleDateString('en-GB', {
@@ -64,10 +64,13 @@ const addlog = () => {
             }
         }
         try {
+            console.log('Reached...')
+            console.log(duration.toString()??'0')
+            console.log(log)
             const newCallId = await addCallLog({
                 number: phoneNumber.toString(),
                 type: callType.toUpperCase(),
-                duration: duration.toString(),
+                duration: duration.toString()??'0',
                 timestamp: Number(selectedDate),
                 name: contactName,
                 simId: ''

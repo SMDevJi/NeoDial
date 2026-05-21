@@ -78,7 +78,7 @@ const Editlog = () => {
             //     name: contactName,
             //     simId: ''
             // });
-
+             
             const rowsUpdated = await editCallLogFull({
                 id: logId,
                 number: phoneNumber.toString(),
